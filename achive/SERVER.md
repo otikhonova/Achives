@@ -21,12 +21,22 @@ NODE_ENV=development
 
 ### Running the Server
 
-#### Development Mode (with auto-reload)
+#### Development Mode (both client and server)
+```bash
+npm run dev
+```
+
+#### Development Mode (server only with auto-reload)
 ```bash
 npm run server:dev
 ```
 
-#### Run Server
+#### Development Mode (client only)
+```bash
+npm run client:dev
+```
+
+#### Run Server (single run)
 ```bash
 npm run server
 ```

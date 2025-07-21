@@ -2,6 +2,8 @@ import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import { Request, Response } from 'express';
+import type { Feedback } from './src/types';
+import { aggregateStats } from './src/utils/aggregateStats';
 
 // Load environment variables
 dotenv.config();
@@ -42,6 +44,41 @@ app.get('/health', (req: Request, res: Response) => {
     timestamp: new Date().toISOString(),
     openai_configured: !!OPENAI_API_KEY
   });
+});
+
+// Badge generation endpoint
+app.post('/badge', (req: Request, res: Response) => {
+  try {
+    // Parse feedbacks from request body
+    const feedbacks: Feedback[] = req.body.feedbacks || [];
+    
+    // Aggregate feedback statistics
+    const stats = aggregateStats(feedbacks);
+    console.log('aggregateStats result:', stats);
+    
+    // Build prompt for OpenAI (placeholder for now)
+    const prompt = `Generate a badge based on the following feedback statistics:
+    - Positive feedback: ${stats.positive}
+    - Neutral feedback: ${stats.neutral}
+    - Negative feedback: ${stats.negative}
+    Total feedbacks: ${feedbacks.length}`;
+    
+    // TODO: Call OpenAI API with the prompt
+    // For now, return mock response
+    res.json({
+      success: true,
+      stats: stats,
+      prompt: prompt,
+      badgePNG: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', // 1x1 transparent PNG placeholder
+      message: 'Badge generated successfully'
+    });
+  } catch (error) {
+    console.error('Error generating badge:', error);
+    res.status(500).json({
+      error: 'Failed to generate badge',
+      message: NODE_ENV === 'development' ? (error as Error).message : 'Internal server error'
+    });
+  }
 });
 
 // API routes placeholder
