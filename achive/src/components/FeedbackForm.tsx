@@ -64,14 +64,29 @@ export default function GiveKudosPage() {
     setPendingFeedback((prev: Feedback[]) => prev.filter((feedback: Feedback) => feedback.id !== id))
   }
 
-  const handleGenerateBadge = () => {
-    // Generate a simple badge ID based on the first colleague's name or timestamp
-    const badgeId = pendingFeedback.length > 0 
-      ? pendingFeedback[0].colleagueName.toLowerCase().replace(/\s+/g, '-') 
-      : 'badge-' + Date.now()
-    
-    // Navigate to the badge page with the generated ID
-    navigate(`/badge/${badgeId}`)
+  const handleGenerateBadge = async () => {
+    if (pendingFeedback.length === 0) return;
+    const employeeName = pendingFeedback[0].colleagueName;
+    // Only send category and message to the server
+    const feedback = pendingFeedback.map(fb => ({
+      category: fb.category,
+      message: fb.message
+    }));
+    try {
+      const res = await fetch('/api/badge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: employeeName, feedback })
+      });
+      const data = await res.json();
+      if (data && data.id) {
+        navigate(`/badge/${data.id}`);
+      } else {
+        alert('Failed to generate badge.');
+      }
+    } catch (err) {
+      alert('Error generating badge.');
+    }
   }
 
   const isFormValid = colleagueName.trim() && category && message.trim()

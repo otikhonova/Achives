@@ -4,6 +4,8 @@ import cors from 'cors';
 import { Request, Response } from 'express';
 import type { Feedback } from './src/types';
 import { aggregateStats } from './src/utils/aggregateStats';
+import { v4 as uuidv4 } from 'uuid';
+
 
 // Load environment variables
 dotenv.config();
@@ -47,31 +49,48 @@ app.get('/health', (req: Request, res: Response) => {
 });
 
 // Badge generation endpoint
-app.post('/badge', (req: Request, res: Response) => {
+// In-memory badge store
+const badges: Record<string, { id: string; name: string; feedback: any[]; imageB64: string }> = {};
+
+app.post('/api/badge', async (req: Request, res: Response) => {
   try {
-    // Parse feedbacks from request body
-    const feedbacks: Feedback[] = req.body.feedbacks || [];
-    
-    // Aggregate feedback statistics
-    const stats = aggregateStats(feedbacks);
-    console.log('aggregateStats result:', stats);
-    
-    // Build prompt for OpenAI (placeholder for now)
-    const prompt = `Generate a badge based on the following feedback statistics:
-    - Positive feedback: ${stats.positive}
-    - Neutral feedback: ${stats.neutral}
-    - Negative feedback: ${stats.negative}
-    Total feedbacks: ${feedbacks.length}`;
-    
-    // TODO: Call OpenAI API with the prompt
-    // For now, return mock response
-    res.json({
-      success: true,
-      stats: stats,
-      prompt: prompt,
-      badgePNG: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', // 1x1 transparent PNG placeholder
-      message: 'Badge generated successfully'
+    const { name, feedback } = req.body;
+    if (!name || !Array.isArray(feedback)) {
+      return res.status(400).json({ error: 'Missing name or feedback array' });
+    }
+
+    // Build prompt string for OpenAI
+    const prompt = `Create a flat 512x512 transparent achievement badge for employee: ${name}. Feedback: ${feedback.map((f: any) => `${f.category}: ${f.message}`).join('; ')}`;
+
+    // Call OpenAI image API (official endpoint)
+    const openaiRes = await fetch('https://api.openai.com/v1/images/generations', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'dall-e-3',
+        prompt,
+        n: 1,
+        size: '1024x1024',
+        response_format: 'b64_json'
+      })
     });
+    const openaiData = await openaiRes.json();
+    if (openaiData.error) {
+      throw new Error(`OpenAI API error: ${openaiData.error.message || JSON.stringify(openaiData.error)}`);
+    }
+    const imageB64 = openaiData.data?.[0]?.b64_json;
+    if (!imageB64) {
+      throw new Error('OpenAI did not return an image');
+    }
+
+    // Store badge in memory
+    const id = uuidv4();
+    badges[id] = { id, name, feedback, imageB64 };
+
+    res.json({ id });
   } catch (error) {
     console.error('Error generating badge:', error);
     res.status(500).json({
@@ -81,12 +100,17 @@ app.post('/badge', (req: Request, res: Response) => {
   }
 });
 
-// API routes placeholder
-app.use('/api', (req: Request, res: Response) => {
+// GET badge by id
+app.get('/api/badge/:id', (req: Request, res: Response) => {
+  const badge = badges[req.params.id];
+  if (!badge) {
+    return res.status(404).json({ error: 'Badge not found' });
+  }
   res.json({
-    message: 'API endpoint',
-    path: req.path,
-    method: req.method
+    id: badge.id,
+    name: badge.name,
+    feedback: badge.feedback,
+    imageB64: badge.imageB64
   });
 });
 

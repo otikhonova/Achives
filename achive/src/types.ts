@@ -1,7 +1,7 @@
 export interface Feedback {
   id: string;
   author: string;
-  category: 'positive' | 'neutral' | 'negative';
+  category: 'hard' | 'soft' | 'english';
   message: string;
   timestamp: string;
 }

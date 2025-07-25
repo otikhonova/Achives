@@ -1,33 +1,29 @@
 import type { Feedback } from '../types';
 
 /**
- * Count how many feedbacks of each category exist.
+ * Count how many feedbacks of each skill category exist.
  */
 export function aggregateStats(feedbacks: Feedback[]): {
-  positive: number;
-  neutral: number;
-  negative: number;
+  hard: number;
+  soft: number;
+  english: number;
 } {
-  // Initialize counters
-  let positive = 0;
-  let neutral = 0;
-  let negative = 0;
+  let hard = 0;
+  let soft = 0;
+  let english = 0;
 
-  // Iterate over feedbacks array and count category occurrences
   for (const feedback of feedbacks) {
     switch (feedback.category) {
-      case 'positive':
-        positive++;
+      case 'hard':
+        hard++;
         break;
-      case 'neutral':
-        neutral++;
+      case 'soft':
+        soft++;
         break;
-      case 'negative':
-        negative++;
+      case 'english':
+        english++;
         break;
     }
   }
-
-  // Return an object with counts
-  return { positive, neutral, negative };
+  return { hard, soft, english };
 }

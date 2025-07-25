@@ -4,7 +4,7 @@ import type { Feedback } from '../../types';
 describe('aggregateStats', () => {
   it('should return zeros when the array is empty', () => {
     const result = aggregateStats([]);
-    expect(result).toEqual({ positive: 0, neutral: 0, negative: 0 });
+    expect(result).toEqual({ hard: 0, soft: 0, english: 0 });
   });
 
   it('should produce correct counts for mixed feedbacks', () => {
@@ -12,107 +12,107 @@ describe('aggregateStats', () => {
       {
         id: '1',
         author: 'John Doe',
-        category: 'positive',
+        category: 'hard',
         message: 'Great work!',
         timestamp: '2023-01-01T00:00:00Z'
       },
       {
         id: '2',
         author: 'Jane Smith',
-        category: 'negative',
+        category: 'soft',
         message: 'Needs improvement',
         timestamp: '2023-01-02T00:00:00Z'
       },
       {
         id: '3',
         author: 'Bob Johnson',
-        category: 'positive',
+        category: 'hard',
         message: 'Excellent!',
         timestamp: '2023-01-03T00:00:00Z'
       },
       {
         id: '4',
         author: 'Alice Brown',
-        category: 'neutral',
+        category: 'english',
         message: 'It was okay',
         timestamp: '2023-01-04T00:00:00Z'
       },
       {
         id: '5',
         author: 'Charlie Wilson',
-        category: 'positive',
+        category: 'soft',
         message: 'Outstanding performance',
         timestamp: '2023-01-05T00:00:00Z'
       }
     ];
 
     const result = aggregateStats(feedbacks);
-    expect(result).toEqual({ positive: 3, neutral: 1, negative: 1 });
+    expect(result).toEqual({ hard: 2, soft: 2, english: 1 });
   });
 
   it('should work correctly when all feedbacks are of one category', () => {
-    const positiveFeedbacks: Feedback[] = [
+    const feedbacks: Feedback[] = [
       {
         id: '1',
         author: 'User 1',
-        category: 'positive',
+        category: 'hard',
         message: 'Fantastic!',
         timestamp: '2023-01-01T00:00:00Z'
       },
       {
         id: '2',
         author: 'User 2',
-        category: 'positive',
+        category: 'hard',
         message: 'Amazing work!',
         timestamp: '2023-01-02T00:00:00Z'
       },
       {
         id: '3',
         author: 'User 3',
-        category: 'positive',
+        category: 'hard',
         message: 'Keep it up!',
         timestamp: '2023-01-03T00:00:00Z'
       }
     ];
 
-    const result = aggregateStats(positiveFeedbacks);
-    expect(result).toEqual({ positive: 3, neutral: 0, negative: 0 });
+    const result = aggregateStats(feedbacks);
+    expect(result).toEqual({ hard: 3, soft: 0, english: 0 });
   });
 
-  it('should work correctly with all negative feedbacks', () => {
-    const negativeFeedbacks: Feedback[] = [
+  it('should work correctly with all english feedbacks', () => {
+    const feedbacks: Feedback[] = [
       {
         id: '1',
         author: 'Critic 1',
-        category: 'negative',
+        category: 'english',
         message: 'Poor performance',
         timestamp: '2023-01-01T00:00:00Z'
       },
       {
         id: '2',
         author: 'Critic 2',
-        category: 'negative',
+        category: 'english',
         message: 'Needs major improvement',
         timestamp: '2023-01-02T00:00:00Z'
       }
     ];
 
-    const result = aggregateStats(negativeFeedbacks);
-    expect(result).toEqual({ positive: 0, neutral: 0, negative: 2 });
+    const result = aggregateStats(feedbacks);
+    expect(result).toEqual({ hard: 0, soft: 0, english: 2 });
   });
 
-  it('should work correctly with all neutral feedbacks', () => {
-    const neutralFeedbacks: Feedback[] = [
+  it('should work correctly with all soft feedbacks', () => {
+    const feedbacks: Feedback[] = [
       {
         id: '1',
         author: 'Observer 1',
-        category: 'neutral',
+        category: 'soft',
         message: 'Average work',
         timestamp: '2023-01-01T00:00:00Z'
       }
     ];
 
-    const result = aggregateStats(neutralFeedbacks);
-    expect(result).toEqual({ positive: 0, neutral: 1, negative: 0 });
+    const result = aggregateStats(feedbacks);
+    expect(result).toEqual({ hard: 0, soft: 1, english: 0 });
   });
 });
