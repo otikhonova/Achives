@@ -66,6 +66,7 @@ export default function BadgePage() {
             alt="badge"
             src={`data:image/png;base64,${badge.imageB64}`}
             className="badge-image"
+            key={badge.id}
           />
           <h2 className="badge-employee-name">{badge.name}</h2>
         </div>
@@ -92,7 +93,10 @@ export default function BadgePage() {
                 body: JSON.stringify({ prompt })
               });
               const data = await res.json();
-              if (res.ok && data && data.imageB64) {
+              if (res.ok && data && data.imageB64 && data.id) {
+                setPrompt("");
+                navigate(`/badge/${data.id}`);
+              } else if (res.ok && data && data.imageB64) {
                 setBadge({ ...badge, imageB64: data.imageB64 });
                 setPrompt("");
               } else {

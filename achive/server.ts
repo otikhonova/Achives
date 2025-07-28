@@ -100,9 +100,18 @@ app.patch('/api/badge/:id/prompt', async (req: Request, res: Response) => {
       if (!imageB64) {
         throw new Error('OpenAI did not return an image');
       }
-      // Update badge image in memory
-      badge.imageB64 = imageB64;
-      res.json({ imageB64 });
+      // Debug: compare old and new imageB64
+      console.log('Old imageB64 (start):', badge.imageB64.slice(0, 100));
+      console.log('New imageB64 (start):', imageB64.slice(0, 100));
+      // Create a new badge with a new id
+      const newId = uuidv4();
+      badges[newId] = {
+        id: newId,
+        name: badge.name,
+        feedback: badge.feedback,
+        imageB64
+      };
+      res.json({ id: newId, imageB64 });
     } finally {
       // Clean up temp file
       try { fs.unlinkSync(tempFilePath); } catch (e) { /* ignore */ }
