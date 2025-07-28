@@ -16,7 +16,8 @@ export default function BadgePage() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const [badge, setBadge] = useState<Badge | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); // for initial page load
+  const [updating, setUpdating] = useState(false); // for PATCH update
   const [prompt, setPrompt] = useState<string>("");
 
   useEffect(() => {
@@ -83,7 +84,7 @@ export default function BadgePage() {
           onSubmit={async (e) => {
             e.preventDefault();
             if (!prompt.trim() || !badge) return;
-            setLoading(true);
+            setUpdating(true);
             try {
               const res = await fetch(`/api/badge/${badge.id}/prompt`, {
                 method: 'PATCH',
@@ -103,7 +104,7 @@ export default function BadgePage() {
             } catch (err) {
               alert('Error updating badge image.');
             } finally {
-              setLoading(false);
+              setUpdating(false);
             }
           }}
         >
@@ -124,9 +125,9 @@ export default function BadgePage() {
             type="submit"
             className="btn btn-primary"
             style={{ marginTop: '0.5rem', minWidth: '120px', minHeight: '36px', position: 'relative' }}
-            disabled={loading}
+            disabled={updating}
           >
-            {loading ? (
+            {updating ? (
               <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <svg
                   width="20"
