@@ -21,6 +21,7 @@ export default function GiveKudosPage() {
   const [category, setCategory] = useState("")
   const [message, setMessage] = useState("")
   const [pendingFeedback, setPendingFeedback] = useState<Feedback[]>([])
+  const [generating, setGenerating] = useState(false)
 
   // Load from sessionStorage on mount
   useEffect(() => {
@@ -65,7 +66,8 @@ export default function GiveKudosPage() {
   }
 
   const handleGenerateBadge = async () => {
-    if (pendingFeedback.length === 0) return;
+    if (pendingFeedback.length === 0 || generating) return;
+    setGenerating(true);
     const employeeName = pendingFeedback[0].colleagueName;
     // Only send category and message to the server
     const feedback = pendingFeedback.map(fb => ({
@@ -86,6 +88,8 @@ export default function GiveKudosPage() {
       }
     } catch (err) {
       alert('Error generating badge.');
+    } finally {
+      setGenerating(false);
     }
   }
 
@@ -207,9 +211,43 @@ export default function GiveKudosPage() {
             <button
               className="btn btn-primary btn-full btn-large"
               onClick={handleGenerateBadge}
-              disabled={pendingFeedback.length === 0}
+              disabled={pendingFeedback.length === 0 || generating}
+              style={{ position: 'relative', minHeight: '44px' }}
             >
-              Generate badge
+              {generating ? (
+                <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 50 50"
+                    style={{ marginRight: '8px' }}
+                    className="spinner"
+                  >
+                    <circle
+                      cx="25"
+                      cy="25"
+                      r="20"
+                      fill="none"
+                      stroke="#fff"
+                      strokeWidth="5"
+                      strokeDasharray="31.415, 31.415"
+                      transform="rotate(72.0681 25 25)"
+                    >
+                      <animateTransform
+                        attributeName="transform"
+                        type="rotate"
+                        from="0 25 25"
+                        to="360 25 25"
+                        dur="1s"
+                        repeatCount="indefinite"
+                      />
+                    </circle>
+                  </svg>
+                  Generating...
+                </span>
+              ) : (
+                "Generate badge"
+              )}
             </button>
           </div>
         </div>

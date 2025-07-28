@@ -17,6 +17,7 @@ export default function BadgePage() {
   const { id } = useParams<{ id: string }>();
   const [badge, setBadge] = useState<Badge | null>(null);
   const [loading, setLoading] = useState(true);
+  const [prompt, setPrompt] = useState<string>("");
 
   useEffect(() => {
     setLoading(true);
@@ -75,6 +76,33 @@ export default function BadgePage() {
             ))}
           </ul>
         </div>
+
+        {/* Additional prompt form */}
+        <form
+          style={{ marginTop: '2rem' }}
+          onSubmit={async (e) => {
+            e.preventDefault();
+            // TODO: Implement PATCH /api/badge/:id/prompt
+            alert('Apply prompt not yet implemented.');
+          }}
+        >
+          <div className="form-group">
+            <label htmlFor="prompt-textarea" className="form-label">
+              Additional prompt for the picture:
+            </label>
+            <textarea
+              id="prompt-textarea"
+              className="form-textarea"
+              placeholder="Describe changes or add details for the badge image..."
+              rows={2}
+              value={prompt}
+              onChange={e => setPrompt(e.target.value)}
+            />
+          </div>
+          <button type="submit" className="btn btn-primary" style={{ marginTop: '0.5rem' }}>
+            Apply prompt
+          </button>
+        </form>
       </div>
     </main>
   );
