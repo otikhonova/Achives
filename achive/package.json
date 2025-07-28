@@ -24,6 +24,7 @@
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.7.0",
+    "sharp": "^0.34.3",
     "uuid": "^11.1.0"
   },
   "devDependencies": {
@@ -35,6 +36,7 @@
     "@types/node-fetch": "^2.6.12",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
+    "@types/sharp": "^0.31.1",
     "@types/uuid": "^10.0.0",
     "@vitejs/plugin-react": "^4.6.0",
     "concurrently": "^9.2.0",

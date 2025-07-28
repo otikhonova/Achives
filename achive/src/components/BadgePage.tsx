@@ -82,8 +82,29 @@ export default function BadgePage() {
           style={{ marginTop: '2rem' }}
           onSubmit={async (e) => {
             e.preventDefault();
-            // TODO: Implement PATCH /api/badge/:id/prompt
-            alert('Apply prompt not yet implemented.');
+            if (!prompt.trim() || !badge) return;
+            setLoading(true);
+            try {
+              const res = await fetch(`/api/badge/${badge.id}/prompt`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt })
+              });
+              const data = await res.json();
+              if (res.ok && data && data.imageB64) {
+                setBadge({ ...badge, imageB64: data.imageB64 });
+                setPrompt("");
+              } else {
+                let errorMsg = 'Failed to update badge image.';
+                if (data?.error) errorMsg = data.error;
+                if (data?.message) errorMsg += `\n${data.message}`;
+                alert(errorMsg);
+              }
+            } catch (err) {
+              alert('Error updating badge image.');
+            } finally {
+              setLoading(false);
+            }
           }}
         >
           <div className="form-group">
@@ -99,8 +120,46 @@ export default function BadgePage() {
               onChange={e => setPrompt(e.target.value)}
             />
           </div>
-          <button type="submit" className="btn btn-primary" style={{ marginTop: '0.5rem' }}>
-            Apply prompt
+          <button
+            type="submit"
+            className="btn btn-primary"
+            style={{ marginTop: '0.5rem', minWidth: '120px', minHeight: '36px', position: 'relative' }}
+            disabled={loading}
+          >
+            {loading ? (
+              <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 50 50"
+                  style={{ marginRight: '8px' }}
+                  className="spinner"
+                >
+                  <circle
+                    cx="25"
+                    cy="25"
+                    r="20"
+                    fill="none"
+                    stroke="#fff"
+                    strokeWidth="5"
+                    strokeDasharray="31.415, 31.415"
+                    transform="rotate(72.0681 25 25)"
+                  >
+                    <animateTransform
+                      attributeName="transform"
+                      type="rotate"
+                      from="0 25 25"
+                      to="360 25 25"
+                      dur="1s"
+                      repeatCount="indefinite"
+                    />
+                  </circle>
+                </svg>
+                Updating...
+              </span>
+            ) : (
+              "Apply prompt"
+            )}
           </button>
         </form>
       </div>
