@@ -54,68 +54,44 @@ app.patch('/api/badge/:id/prompt', async (req: Request, res: Response) => {
     }
 
     // Compose a new prompt for OpenAI using the original badge context and the new user prompt
-    const fullPrompt = `Edit this achievement badge for employee: ${badge.name}. Feedback: ${badge.feedback.map((f: any) => `${f.category}: ${f.message}`).join('; ')}. Edit: ${prompt}`;
+    const basePrompt = `Create a flat 512x512 transparent achievement badge for employee: ${badge.name}. Feedback: ${badge.feedback.map((f: any) => `${f.category}: ${f.message}`).join('; ')}`;
+    const fullPrompt = `${basePrompt}. Additional edit: ${prompt}`;
 
-    // Convert base64 image to buffer
-    const imageBuffer = Buffer.from(badge.imageB64, 'base64');
-    // Convert to RGBA using sharp
-    const rgbaBuffer = await sharp(imageBuffer).ensureAlpha().png().toBuffer();
-    // PNG signature check (first 8 bytes)
-    const pngSignature = rgbaBuffer.slice(0, 8).toString('hex');
-    const isPng = pngSignature === '89504e470d0a1a0a';
-    console.log('Badge image buffer length:', rgbaBuffer.length);
-    console.log('Badge image PNG signature:', pngSignature, 'Is PNG:', isPng);
-    if (!isPng) {
-      throw new Error('Badge image is not a valid PNG file.');
+    // Call OpenAI image generation endpoint
+    const openaiRes = await fetch('https://api.openai.com/v1/images/generations', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'dall-e-3',
+        prompt: fullPrompt,
+        n: 1,
+        size: '1024x1024',
+        response_format: 'b64_json'
+      })
+    });
+    const openaiData = await openaiRes.json();
+    if (openaiData.error) {
+      throw new Error(`OpenAI API error: ${openaiData.error.message || JSON.stringify(openaiData.error)}`);
     }
-
-    // Write buffer to a temp file (handle __dirname for ES modules)
-    const __filename = fileURLToPath(import.meta.url);
-    const __dirname = path.dirname(__filename);
-    const tempFilePath = path.join(__dirname, `badge-edit-${badge.id}.png`);
-    fs.writeFileSync(tempFilePath, rgbaBuffer);
-
-    // Prepare form-data for OpenAI /v1/images/edits endpoint using file stream
-    const form = new FormData();
-    form.append('image', fs.createReadStream(tempFilePath));
-    form.append('prompt', fullPrompt);
-    form.append('n', '1');
-    form.append('size', '1024x1024');
-    form.append('response_format', 'b64_json');
-
-    try {
-      const openaiRes = await fetch('https://api.openai.com/v1/images/edits', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${OPENAI_API_KEY}`,
-          ...form.getHeaders(),
-        },
-        body: form
-      });
-      const openaiData = await openaiRes.json();
-      if (openaiData.error) {
-        throw new Error(`OpenAI API error: ${openaiData.error.message || JSON.stringify(openaiData.error)}`);
-      }
-      const imageB64 = openaiData.data?.[0]?.b64_json;
-      if (!imageB64) {
-        throw new Error('OpenAI did not return an image');
-      }
-      // Debug: compare old and new imageB64
-      console.log('Old imageB64 (start):', badge.imageB64.slice(0, 100));
-      console.log('New imageB64 (start):', imageB64.slice(0, 100));
-      // Create a new badge with a new id
-      const newId = uuidv4();
-      badges[newId] = {
-        id: newId,
-        name: badge.name,
-        feedback: badge.feedback,
-        imageB64
-      };
-      res.json({ id: newId, imageB64 });
-    } finally {
-      // Clean up temp file
-      try { fs.unlinkSync(tempFilePath); } catch (e) { /* ignore */ }
+    const imageB64 = openaiData.data?.[0]?.b64_json;
+    if (!imageB64) {
+      throw new Error('OpenAI did not return an image');
     }
+    // Debug: compare old and new imageB64
+    console.log('Old imageB64 (start):', badge.imageB64.slice(0, 100));
+    console.log('New imageB64 (start):', imageB64.slice(0, 100));
+    // Create a new badge with a new id
+    const newId = uuidv4();
+    badges[newId] = {
+      id: newId,
+      name: badge.name,
+      feedback: badge.feedback,
+      imageB64
+    };
+    res.json({ id: newId, imageB64 });
   } catch (error) {
     console.error('Error updating badge image:', error);
     res.status(500).json({
